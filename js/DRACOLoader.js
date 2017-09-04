@@ -405,7 +405,7 @@ THREE.DRACOLoader.loadJavaScriptFile = function(path, onLoadFunc,
 }
 
 THREE.DRACOLoader.loadWebAssemblyDecoder = function(dracoDecoder) {
-  dracoDecoder.dracoDecoderType['wasmBinaryFile'] = '../draco_decoder.wasm';
+  dracoDecoder.dracoDecoderType['wasmBinaryFile'] = 'js/draco_decoder.wasm';
   var xhr = new XMLHttpRequest();
   xhr.open('GET', '../draco_decoder.wasm', true);
   xhr.responseType = 'arraybuffer';
@@ -427,10 +427,10 @@ THREE.DRACOLoader.loadDracoDecoder = function(dracoDecoder) {
   if (typeof WebAssembly !== 'object' ||
       dracoDecoder.dracoDecoderType.type === 'js') {
     // No WebAssembly support
-    THREE.DRACOLoader.loadJavaScriptFile('../draco_decoder.js',
+    THREE.DRACOLoader.loadJavaScriptFile('js/draco_decoder.js',
         null, dracoDecoder);
   } else {
-    THREE.DRACOLoader.loadJavaScriptFile('../draco_wasm_wrapper.js',
+    THREE.DRACOLoader.loadJavaScriptFile('js/draco_wasm_wrapper.js',
         function (dracoDecoder) {
           THREE.DRACOLoader.loadWebAssemblyDecoder(dracoDecoder);
         }, dracoDecoder);
