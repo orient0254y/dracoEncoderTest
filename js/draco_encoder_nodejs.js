@@ -38128,13 +38128,20 @@ function DracoEncoderModule(DracoEncoderModule) {
     MeshBuilder.prototype["__destroy__"] = MeshBuilder.prototype.__destroy__ = (function() { var self = this.ptr;
         _emscripten_bind_MeshBuilder___destroy___0(self) });
 
-    function DracoInt8Array() { this.ptr = _emscripten_bind_DracoInt8Array_DracoInt8Array_0();
-        getCache(DracoInt8Array)[this.ptr] = this } DracoInt8Array.prototype = Object.create(WrapperObject.prototype);
+    function DracoInt8Array() { 
+        this.ptr = _emscripten_bind_DracoInt8Array_DracoInt8Array_0();
+        getCache(DracoInt8Array)[this.ptr] = this 
+    } 
+    DracoInt8Array.prototype = Object.create(WrapperObject.prototype);
     DracoInt8Array.prototype.constructor = DracoInt8Array;
     DracoInt8Array.prototype.__class__ = DracoInt8Array;
     DracoInt8Array.__cache__ = {};
     Module["DracoInt8Array"] = DracoInt8Array;
-    DracoInt8Array.prototype["GetValue"] = DracoInt8Array.prototype.GetValue = (function(arg0) { var self = this.ptr; if (arg0 && typeof arg0 === "object") arg0 = arg0.ptr; return _emscripten_bind_DracoInt8Array_GetValue_1(self, arg0) });
+    DracoInt8Array.prototype["GetValue"] = DracoInt8Array.prototype.GetValue = (function(arg0) { 
+        var self = this.ptr; 
+        if (arg0 && typeof arg0 === "object") arg0 = arg0.ptr; 
+        return _emscripten_bind_DracoInt8Array_GetValue_1(self, arg0) 
+    });
     DracoInt8Array.prototype["size"] = DracoInt8Array.prototype.size = (function() { var self = this.ptr; return _emscripten_bind_DracoInt8Array_size_0(self) });
     DracoInt8Array.prototype["__destroy__"] = DracoInt8Array.prototype.__destroy__ = (function() { var self = this.ptr;
         _emscripten_bind_DracoInt8Array___destroy___0(self) });

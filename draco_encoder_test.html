@@ -37,7 +37,7 @@
     <script type="text/javascript" src="js/OBJLoader.js"></script>
     <script type="text/javascript" src="js/FileSaver.js"></script>
     <script type="text/javascript" src="js/OrbitControls.js"></script>
-    <script type="text/javascript" src="js/draco_encoder_nodejs.js"></script>
+    <script type="text/javascript" src="js/draco_encoder.js"></script>
     <script type="text/javascript" src="js/draco_decoder.js"></script>
     <script type="text/javascript" src="js/DRACOLoader.js"></script>
     <script type="text/javascript" src="js/geometry_helper.js"></script>
@@ -51,7 +51,8 @@
       createDracoDecoder();
 
       function createDracoDecoder() {
-        dracoLoader = new THREE.DRACOLoader();
+        dracoDecoderType.type = "js";
+        dracoLoader = new THREE.DRACOLoader(undefined, dracoDecoderType);
       }
 
       function switchDecoder() {
@@ -162,14 +163,14 @@
                         }
                     }
                 });
+                var decoderModule = DracoDecoderModule();
+                var decoder = new decoderModule.Decoder();
                 var mesh = {
                     indices : new Uint32Array(indices),
                     vertices : new Float32Array(vertices),
                     normals : new Float32Array(normals)
                 };
-                console.log(mesh);
                 var encoderModule = DracoEncoderModule();
-                console.log(encoderModule);
                 var encoder = new encoderModule.Encoder();
                 var meshBuilder = new encoderModule.MeshBuilder();
                 var dracoMesh = new encoderModule.Mesh();
@@ -177,7 +178,6 @@
                 var numFaces = mesh.indices.length / 3;
                 var numPoints = mesh.vertices.length;
                 meshBuilder.AddFacesToMesh(dracoMesh, numFaces, mesh.indices);
-
                 meshBuilder.AddFloatAttributeToMesh(dracoMesh, encoderModule.POSITION,numPoints, 3, mesh.vertices);
                 if (mesh.hasOwnProperty('normals')) {
                     meshBuilder.AddFloatAttributeToMesh(dracoMesh, encoderModule.NORMAL, numPoints, 3, mesh.normals);
@@ -188,22 +188,18 @@
                 if (mesh.hasOwnProperty('texcoords')) {
                     meshBuilder.AddFloatAttributeToMesh(dracoMesh, encoderModule.TEX_COORD, numPoints, 3, mesh.texcoords);
                 }
-                console.log(meshBuilder);
                 var encodedData = new encoderModule.DracoInt8Array();
                 // if (method === "edgebreaker") {
-                  encoder.SetEncodingMethod(encoderModule.MESH_EDGEBREAKER_ENCODING);
+                  // encoder.SetEncodingMethod(encoderModule.MESH_EDGEBREAKER_ENCODING);
                 // } else if (method === "sequential") {
-                  // encoder.SetEncodingMethod(encoderModule.MESH_SEQUENTIAL_ENCODING);
+                  encoder.SetEncodingMethod(encoderModule.MESH_SEQUENTIAL_ENCODING);
                 // }
 
                 // Use default encoding setting.
                 var encodedLen = encoder.EncodeMeshToDracoBuffer(dracoMesh,encodedData);
-                console.log(encodedLen);
-                console.log(dracoMesh);
-
                 var outputBuffer = new ArrayBuffer(encodedLen);
                 var outputData = new Int8Array(outputBuffer);
-                for (var i = 0; i < encodedLen; ++i) {
+                for (var i = 0; i < numFaces; ++i) {
                     outputData[i] = encodedData.GetValue(i);
                 }
                 encoderModule.destroy(encodedData);
@@ -211,49 +207,42 @@
                 encoderModule.destroy(meshBuilder);
                 // Write to file. You can view the the file using webgl_loader_draco.html
                 // example.
-                console.log(encodedData);
-                console.log(outputBuffer);
-                console.log(outputBuffer.length);
-                console.log(outputBuffer.byteLength);
-                console.log(outputData);
-                dracoLoader.setVerbosity(1);
+                // dracoLoader.setVerbosity(1);
 
-                dracoLoader.setDrawMode(THREE.TrianglesDrawMode);
+                // dracoLoader.setDrawMode(THREE.TrianglesDrawMode);
 
-                // Skip dequantization of the position attribute. It will be done on the GPU.
-                dracoLoader.setSkipDequantization('position', true);
-                var decoderModule = DracoDecoderModule();
-                console.log(decoderModule);
-                var decoder = new decoderModule.Decoder();
-                console.log(decoder);
-                var buffer = new decoderModule.DecoderBuffer();
-                buffer.Init(new Int8Array(outputBuffer), outputBuffer.byteLength);
-                var geometryType = decoder.GetEncodedGeometryType(buffer);
+                // // Skip dequantization of the position attribute. It will be done on the GPU.
+                // dracoLoader.setSkipDequantization('position', true);
+                // var buffer = new decoderModule.DecoderBuffer();
+                // console.log(outputData.length);
+                // console.log(outputBuffer.byteLength);
+                // ///????????????????????????????
+                // buffer.Init(outputData, outputBuffer.byteLength);
+                // var geometryType = decoder.GetEncodedGeometryType(buffer);
 
-
-                var dracoGeometry;
-                var status;
-                if (geometryType === decoderModule.TRIANGULAR_MESH) {
-                    dracoGeometry = new decoderModule.Mesh();
-                    status = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
-                } else if (geometryType === decoderModule.POINT_CLOUD) {
-                    dracoGeometry = new decoderModule.PointCloud();
-                    status = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
-                } else {
-                    var errorMsg = 'Error: Unknown geometry type.';
-                    console.error(errorMsg);
-                }
-                console.log(status);
-                console.log(dracoGeometry);
-                decoderModule.destroy(buffer);
+                // var dracoGeometry;
+                // var status;
+                // if (geometryType === decoderModule.TRIANGULAR_MESH) {
+                //     dracoGeometry = new decoderModule.Mesh();
+                //     status = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
+                //     console.log("load a mesh");
+                // } else if (geometryType === decoderModule.POINT_CLOUD) {
+                //     dracoGeometry = new decoderModule.PointCloud();
+                //     status = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
+                //     console.log("load a pointCloud");
+                // } else {
+                //     var errorMsg = 'Error: Unknown mesh type.';
+                //     console.error(errorMsg);
+                // }
+                // decoderModule.destroy(buffer);
 
                 // var str = String.fromCharCode.apply(null,outputBuffer);
-                // console.log(str);
                 
                 /*
                 * The problem here.Maybe it happen before;
                 */
-                dracoLoader.decodeDracoFile(outputBuffer, function(bufferGeometry) {
+                console.log("load geometry------------------");
+                dracoLoader.decodeDracoFile(outputData, function(bufferGeometry) {
                   console.log(bufferGeometry);
                     if (dracoLoader.decode_time !== undefined) {
                       fileDisplayArea.innerText = 'Decode time = ' + dracoLoader.decode_time + '\n' +
@@ -266,23 +255,23 @@
                       setDequantizationForMaterial(material, bufferGeometry);
                     }
 
-                    var geometry;
+                    var mesh;
                     // Point cloud does not have face indices.
                     if (bufferGeometry.index == null) {
-                      geometry = new THREE.Points(bufferGeometry, material);
+                      mesh = new THREE.Points(bufferGeometry, material);
                     } else {
                       if (bufferGeometry.attributes.normal === undefined) {
                         var geometryHelper = new GeometryHelper();
                         geometryHelper.computeVertexNormals(bufferGeometry);
                       }
-                      geometry = new THREE.Mesh(bufferGeometry, material);
-                      geometry.drawMode = dracoLoader.drawMode;
+                      mesh = new THREE.Mesh(bufferGeometry, material);
+                      mesh.drawMode = dracoLoader.drawMode;
                     }
-                    console.log(geometry);
-                    // Compute range of the geometry coordinates for proper rendering.
+                    console.log(mesh);
+                    // Compute range of the mesh coordinates for proper rendering.
                     bufferGeometry.computeBoundingBox();
                     if (bufferGeometry.attributes['position'].isQuantized) {
-                      // If the geometry is quantized, transform the bounding box to the dequantized
+                      // If the mesh is quantized, transform the bounding box to the dequantized
                       // coordinates.
                       var posAttribute = bufferGeometry.attributes['position'];
                       var normConstant =
@@ -313,23 +302,29 @@
                     var midZ =
                       (bufferGeometry.boundingBox.min.z + bufferGeometry.boundingBox.max.z) / 2;
 
-                    geometry.scale.multiplyScalar(scale);
-                    geometry.position.x = -midX * scale;
-                    geometry.position.y = -midY * scale;
-                    geometry.position.z = -midZ * scale;
-                    geometry.castShadow = true;
-                    geometry.receiveShadow = true;
+                    mesh.scale.multiplyScalar(scale);
+                    mesh.position.x = -midX * scale;
+                    mesh.position.y = -midY * scale;
+                    mesh.position.z = -midZ * scale;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
 
                     var selectedObject = scene.getObjectByName("my_mesh");
                     scene.remove(selectedObject);
-                    geometry.name = "my_mesh";
-                    scene.add(geometry);
+                    mesh.name = "my_mesh";
+                    scene.add(mesh);
                 });
             });
         };
+        var num = 0;
+        var object = new THREE.Object3D();
+        var scale = 1;
         fileInput.addEventListener('change', function(e) {
-          var file = fileInput.files[0];
+          num ++;
+          var file = this.files[0];
           console.log(file);
+          var name = this.files[0].name;
+          var objName = name.split(".")[1];
           var reader = new FileReader();
           reader.onload = function(e) {
             // Enable logging to console output.
@@ -340,7 +335,7 @@
             dracoLoader.setDrawMode(THREE.TrianglesDrawMode);
 
             // Skip dequantization of the position attribute. It will be done on the GPU.
-            dracoLoader.setSkipDequantization('position', true);
+            // dracoLoader.setSkipDequantization('position', true);
             console.log(reader.result);
             dracoLoader.decodeDracoFile(reader.result, function(bufferGeometry) {
               console.log(bufferGeometry);
@@ -349,71 +344,86 @@
                                             'Import time = ' + dracoLoader.import_time;
               }
               var material = new THREE.MeshStandardMaterial({vertexColors: THREE.VertexColors});
+              
               // If the position attribute is quantized, modify the material to perform
               // dequantization on the GPU.
               if (bufferGeometry.attributes['position'].isQuantized) {
-                setDequantizationForMaterial(material, bufferGeometry);
+                // setDequantizationForMaterial(material, bufferGeometry);
               }
 
-              var geometry;
+              var mesh;
               // Point cloud does not have face indices.
-              if (bufferGeometry.index == null) {
-                geometry = new THREE.Points(bufferGeometry, material);
-              } else {
-                if (bufferGeometry.attributes.normal === undefined) {
-                  var geometryHelper = new GeometryHelper();
-                  geometryHelper.computeVertexNormals(bufferGeometry);
-                }
-                geometry = new THREE.Mesh(bufferGeometry, material);
-                geometry.drawMode = dracoLoader.drawMode;
-              }
-              console.log(geometry);
-              // Compute range of the geometry coordinates for proper rendering.
-              bufferGeometry.computeBoundingBox();
-              if (bufferGeometry.attributes['position'].isQuantized) {
-                // If the geometry is quantized, transform the bounding box to the dequantized
-                // coordinates.
-                var posAttribute = bufferGeometry.attributes['position'];
-                var normConstant =
-                    posAttribute.maxRange / (1 << posAttribute.numQuantizationBits);
-                var minPos = posAttribute.minValues;
-                bufferGeometry.boundingBox.max.x =
-                    minPos[0] + bufferGeometry.boundingBox.max.x * normConstant;
-                bufferGeometry.boundingBox.max.y =
-                    minPos[1] + bufferGeometry.boundingBox.max.y * normConstant;
-                bufferGeometry.boundingBox.max.z =
-                    minPos[2] + bufferGeometry.boundingBox.max.z * normConstant;
-                bufferGeometry.boundingBox.min.x =
-                    minPos[0] + bufferGeometry.boundingBox.min.x * normConstant;
-                bufferGeometry.boundingBox.min.y =
-                    minPos[1] + bufferGeometry.boundingBox.min.y * normConstant;
-                bufferGeometry.boundingBox.min.z =
-                    minPos[2] + bufferGeometry.boundingBox.min.z * normConstant;
-              }
-              var sizeX = bufferGeometry.boundingBox.max.x - bufferGeometry.boundingBox.min.x;
-              var sizeY = bufferGeometry.boundingBox.max.y - bufferGeometry.boundingBox.min.y;
-              var sizeZ = bufferGeometry.boundingBox.max.z - bufferGeometry.boundingBox.min.z;
-              var diagonalSize = Math.sqrt(sizeX * sizeX + sizeY * sizeY + sizeZ * sizeZ);
-              var scale = 1.0 / diagonalSize;
-              var midX =
-                (bufferGeometry.boundingBox.min.x + bufferGeometry.boundingBox.max.x) / 2;
-              var midY =
-                (bufferGeometry.boundingBox.min.y + bufferGeometry.boundingBox.max.y) / 2;
-              var midZ =
-                (bufferGeometry.boundingBox.min.z + bufferGeometry.boundingBox.max.z) / 2;
+              var mtlLoader = new THREE.MTLLoader();
+              mtlLoader.setPath( 'models/' );
+              mtlLoader.load( 'ztzh.mtl', function( materials ) {
+                  materials.preload();
+                  if (bufferGeometry.index == null) {
+                    mesh = new THREE.Points(bufferGeometry, materials.materials[objName]);
+                  } else {
+                    if (bufferGeometry.attributes.normal === undefined) {
+                      var geometryHelper = new GeometryHelper();
+                      geometryHelper.computeVertexNormals(bufferGeometry);
+                    }
+                    mesh = new THREE.Mesh(bufferGeometry, materials.materials[objName]);
+                    mesh.drawMode = dracoLoader.drawMode;
+                  }
+                  // Compute range of the mesh coordinates for proper rendering.
+                  if (num === 1) {
+                    bufferGeometry.computeBoundingBox();
+                    if (bufferGeometry.attributes['position'].isQuantized) {
+                      console.log(bufferGeometry.attributes['position'].isQuantized);
+                      console.log("---------------------------");
+                      // If the mesh is quantized, transform the bounding box to the dequantized
+                      // coordinates.
+                      var posAttribute = bufferGeometry.attributes['position'];
+                      var normConstant =
+                          posAttribute.maxRange / (1 << posAttribute.numQuantizationBits);
+                      var minPos = posAttribute.minValues;
+                      bufferGeometry.boundingBox.max.x =
+                          minPos[0] + bufferGeometry.boundingBox.max.x * normConstant;
+                      bufferGeometry.boundingBox.max.y =
+                          minPos[1] + bufferGeometry.boundingBox.max.y * normConstant;
+                      bufferGeometry.boundingBox.max.z =
+                          minPos[2] + bufferGeometry.boundingBox.max.z * normConstant;
+                      bufferGeometry.boundingBox.min.x =
+                          minPos[0] + bufferGeometry.boundingBox.min.x * normConstant;
+                      bufferGeometry.boundingBox.min.y =
+                          minPos[1] + bufferGeometry.boundingBox.min.y * normConstant;
+                      bufferGeometry.boundingBox.min.z =
+                          minPos[2] + bufferGeometry.boundingBox.min.z * normConstant;
+                    }
+                    var sizeX = bufferGeometry.boundingBox.max.x - bufferGeometry.boundingBox.min.x;
+                    var sizeY = bufferGeometry.boundingBox.max.y - bufferGeometry.boundingBox.min.y;
+                    var sizeZ = bufferGeometry.boundingBox.max.z - bufferGeometry.boundingBox.min.z;
+                    var diagonalSize = Math.sqrt(sizeX * sizeX + sizeY * sizeY + sizeZ * sizeZ);
+                    scale = 1.0 / diagonalSize;
+                    var midX = (bufferGeometry.boundingBox.min.x + bufferGeometry.boundingBox.max.x) / 2;
+                    var midY = (bufferGeometry.boundingBox.min.y + bufferGeometry.boundingBox.max.y) / 2;
+                    var midZ = (bufferGeometry.boundingBox.min.z + bufferGeometry.boundingBox.max.z) / 2;
+                  }
+                  // mesh.scale.multiplyScalar(scale);
+                  // mesh.position.x = -midX * scale;
+                  // mesh.position.y = -midY * scale;
+                  // mesh.position.z = -midZ * scale;
+                  mesh.castShadow = true;
+                  mesh.receiveShadow = true;
 
-              geometry.scale.multiplyScalar(scale);
-              geometry.position.x = -midX * scale;
-              geometry.position.y = -midY * scale;
-              geometry.position.z = -midZ * scale;
-              geometry.castShadow = true;
-              geometry.receiveShadow = true;
-
-              var selectedObject = scene.getObjectByName("my_mesh");
-              scene.remove(selectedObject);
-              geometry.name = "my_mesh";
-              console.log(geometry);
-              scene.add(geometry);
+                  var selectedObject = scene.getObjectByName("my_mesh");
+                  // scene.remove(selectedObject);
+                  var drcLength = 0;
+                  for (var prop in materials.materials) {
+                      drcLength ++;
+                  }
+                  // if (num < drcLength) {
+                    // object.add(mesh);
+                  // }else{
+                    console.log(mesh);
+                    object.add(mesh);
+                    object.scale.multiplyScalar(scale);
+                    scene.add(object);
+                  // }
+                  // mesh.name = "my_mesh";
+              });
             });
           }
           reader.readAsArrayBuffer(file);

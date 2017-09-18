@@ -84,9 +84,9 @@ THREE.DRACOLoader.prototype = {
 
     decodeDracoFile: function(rawBuffer, callback) {
       var scope = this;
-      THREE.DRACOLoader.getDecoder(this,
-          function(dracoDecoder) {
-            scope.decodeDracoFileInternal(rawBuffer, dracoDecoder, callback);
+      THREE.DRACOLoader.getDecoder(this,function(dracoDecoder) {
+          console.log(dracoDecoder);
+          scope.decodeDracoFileInternal(rawBuffer, dracoDecoder, callback);
       });
     },
 
@@ -95,18 +95,13 @@ THREE.DRACOLoader.prototype = {
        * Here is how to use Draco Javascript decoder and get the geometry.
        */
       var buffer = new dracoDecoder.DecoderBuffer();
-      console.log(rawBuffer);
-      console.log(new Int8Array(rawBuffer));
-      console.log(rawBuffer.byteLength);
       buffer.Init(new Int8Array(rawBuffer), rawBuffer.byteLength);
-      console.log(buffer);
       var decoder = new dracoDecoder.Decoder();
 
       /*
        * Determine what type is this file: mesh or point cloud.
        */
       var geometryType = decoder.GetEncodedGeometryType(buffer);
-      console.log(geometryType);
       if (geometryType == dracoDecoder.TRIANGULAR_MESH) {
         if (this.verbosity > 0) {
           console.log('Loaded a mesh.');
@@ -120,12 +115,10 @@ THREE.DRACOLoader.prototype = {
         console.error(errorMsg);
         throw new Error(errorMsg);
       }
-      callback(this.convertDracoGeometryTo3JS(dracoDecoder, decoder,
-          geometryType, buffer));
+      callback(this.convertDracoGeometryTo3JS(dracoDecoder, decoder,geometryType, buffer));
     },
 
-    convertDracoGeometryTo3JS: function(dracoDecoder, decoder, geometryType,
-                                        buffer) {
+    convertDracoGeometryTo3JS: function(dracoDecoder, decoder, geometryType,buffer) {
         if (this.getAttributeOptions('position').skipDequantization === true) {
           decoder.SkipAttributeTransform(dracoDecoder.POSITION);
         }
@@ -137,10 +130,8 @@ THREE.DRACOLoader.prototype = {
           decodingStatus = decoder.DecodeBufferToMesh(buffer, dracoGeometry);
         } else {
           dracoGeometry = new dracoDecoder.PointCloud();
-          decodingStatus =
-              decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
+          decodingStatus = decoder.DecodeBufferToPointCloud(buffer, dracoGeometry);
         }
-        console.log(dracoGeometry);
         if (!decodingStatus.ok() || dracoGeometry.ptr == 0) {
           var errorMsg = 'THREE.DRACOLoader: Decoding failed: ';
           errorMsg += decodingStatus.error_msg();
@@ -181,8 +172,7 @@ THREE.DRACOLoader.prototype = {
         }
 
         // Get position attribute. Must exists.
-        var posAttId = decoder.GetAttributeId(dracoGeometry,
-                                                dracoDecoder.POSITION);
+        var posAttId = decoder.GetAttributeId(dracoGeometry,dracoDecoder.POSITION);
         if (posAttId == -1) {
           var errorMsg = 'THREE.DRACOLoader: No position attribute found.';
           console.error(errorMsg);
